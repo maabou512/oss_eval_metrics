@@ -1,0 +1,51 @@
+{
+    "project": "ClickHouse/ClickHouse",
+    "generated_at": "2025-12-22T22:48:40.875098",
+    "start_year_requested": 2022,
+    "metrics": {
+        "2022": {
+            "total_commits": 24021,
+            "contrib_total": 483,
+            "contrib_active_n10": 144,
+            "bus_factor_caf": 13,
+            "org_count": 91,
+            "elephant_factor": 1,
+            "issues_new": 11221,
+            "issues_closed": 10280,
+            "avg_days_to_close": 43.82
+        },
+        "2023": {
+            "total_commits": 27294,
+            "contrib_total": 494,
+            "contrib_active_n10": 164,
+            "bus_factor_caf": 13,
+            "org_count": 101,
+            "elephant_factor": 1,
+            "issues_new": 13374,
+            "issues_closed": 12660,
+            "avg_days_to_close": 43.44
+        },
+        "2024": {
+            "total_commits": 31498,
+            "contrib_total": 489,
+            "contrib_active_n10": 171,
+            "bus_factor_caf": 16,
+            "org_count": 102,
+            "elephant_factor": 1,
+            "issues_new": 15353,
+            "issues_closed": 14778,
+            "avg_days_to_close": 58.39
+        },
+        "2025": {
+            "total_commits": 37331,
+            "contrib_total": 483,
+            "contrib_active_n10": 190,
+            "bus_factor_caf": 17,
+            "org_count": 108,
+            "elephant_factor": 1,
+            "issues_new": 18544,
+            "issues_closed": 17152,
+            "avg_days_to_close": 39.0
+        }
+    }
+}

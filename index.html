@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>OSS Health Radar Dashboard</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f9; margin: 0; padding: 20px; color: #333; }
+        .dashboard { display: grid; grid-template-columns: 320px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        
+        #sidebar { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: fit-content; }
+        #chart-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        .project-selector { margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #eee; transition: 0.2s; display: flex; align-items: center; }
+        .project-selector:hover { background: #f9f9f9; }
+        .project-selector input { margin-right: 12px; transform: scale(1.2); cursor: pointer; }
+        .project-selector label { cursor: pointer; font-weight: bold; flex-grow: 1; }
+        
+        #explanation { margin-top: 40px; padding: 25px; background: #fafafa; border-radius: 12px; border-top: 4px solid #007bff; }
+        #explanation h4 { margin-top: 0; color: #007bff; font-size: 18px; }
+        #explanation p { font-size: 14px; color: #666; margin-bottom: 20px; }
+        #explanation table { width: 100%; border-collapse: collapse; font-size: 14px; background: white; border-radius: 8px; overflow: hidden; }
+        #explanation th, #explanation td { text-align: left; padding: 12px 15px; border-bottom: 1px solid #eee; }
+        #explanation th { background: #f0f4f8; color: #444; }
+
+        .axis-label { font-size: 14px; font-weight: bold; fill: #555; }
+        .radar-area { fill-opacity: 0.2; stroke-width: 3; }
+    </style>
+</head>
+<body>
+
+<h2 style="text-align: center; margin-bottom: 30px;">🚀 OSS Health Radar Comparison</h2>
+
+<div class="dashboard">
+    <div id="sidebar">
+        <h3 style="margin-top:0">Select Projects</h3>
+        <div id="selectors"></div>
+        <p style="font-size: 12px; color: #999; margin-top: 25px; line-height: 1.4;">
+            左側のチェックボックスで比較対象を切り替えられます。データは <code>output/</code> 内の各プロジェクト最新年度を参照しています。
+        </p>
+    </div>
+
+    <div id="chart-container">
+        <div id="chart" style="display: flex; justify-content: center;"></div>
+        
+        <div id="explanation">
+            <h4>📊 指標の定義と特性プロファイル</h4>
+            <p>このチャートはプロジェクトの優劣を「採点」するものではなく、各コミュニティの構造的特徴やリソースの集中度を可視化したものです。外側に広がるほど、その項目における特性が強いことを示します。</p>
+            <table>
+                <thead>
+                    <tr><th>指標</th><th>レベル5 (外限) の目安</th><th>特性の解説</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><b>Activity</b></td><td>年間 5,000 コミット〜</td><td>開発の回転速度。非常に活発な機能追加・改善が行われている状態。</td></tr>
+                    <tr><td><b>Diversity</b></td><td>関与組織 15以上 (Elephant 2以上)</td><td>組織の多様性。複数の企業や団体が支え合い、自立したエコシステムを形成。</td></tr>
+                    <tr><td><b>Density</b></td><td>Active貢献者率 70%〜</td><td>コミュニティの密度。一見さんではなく、継続的な常連が主体となって開発。</td></tr>
+                    <tr><td><b>Responsiveness</b></td><td>平均クローズ 5日以内</td><td>フィードバックの速さ。IssueやPRが素早く処理され、貢献の障壁が低い。</td></tr>
+                    <tr><td><b>Robustness</b></td><td>Bus Factor (CAF) 10以上</td><td>層の厚さ。特定の少人数に依存せず、知見がチーム内に分散されている。</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 対象ファイルの設定 ---
+    const projectFiles = [
+        { id: "clickhouse", name: "ClickHouse", file: "ClickHouse_ClickHouse_final_report.json" },
+        { id: "postgres", name: "PostgreSQL", file: "postgres_postgres_final_report.json" },
+        { id: "tsurugi", name: "TsurugiDB", file: "project-tsurugi_tsurugidb_final_report.json" }
+    ];
+
+    const width = 600, height = 500, margin = 75;
+    const radius = Math.min(width, height) / 2 - margin;
+    const axes = ["Activity", "Diversity", "Density", "Responsiveness", "Robustness"];
+    const angleSlice = (Math.PI * 2) / axes.length;
+    const colors = d3.scaleOrdinal(d3.schemeCategory10);
+
+    let loadedData = {};
+
+    // --- 各指標の正規化ロジック ---
+    function getScores(data) {
+        const years = Object.keys(data.metrics).sort();
+        const d = data.metrics[years[years.length - 1]]; // 最新年
+        
+        return [
+            {axis: "Activity",       value: Math.min(5, d.total_commits / 1000)}, // 5000でLv5
+            {axis: "Diversity",      value: Math.min(5, (d.org_count / 15) + (d.elephant_factor > 1 ? 2 : 0))},
+            {axis: "Density",        value: Math.min(5, (d.contrib_active_n10 / d.contrib_total) * 7.1)}, // 70%でLv5
+            {axis: "Responsiveness", value: Math.max(0.5, Math.min(5, 5 - (d.avg_days_to_close / 14)))}, // 2週間程度なら中間
+            {axis: "Robustness",     value: Math.min(5, d.bus_factor_caf / 2)} // CAF 10でLv5
+        ];
+    }
+
+    // セレクターの構築
+    const selectors = d3.select("#selectors");
+    projectFiles.forEach((p, i) => {
+        const div = selectors.append("div").attr("class", "project-selector");
+        div.append("input")
+            .attr("type", "checkbox")
+            .attr("id", p.id)
+            .on("change", () => updateChart());
+        div.append("label")
+            .attr("for", p.id)
+            .style("color", colors(i))
+            .text(p.name);
+    });
+
+    // 初期化とデータロード
+    async function init() {
+        for (const p of projectFiles) {
+            try {
+                const res = await fetch(`./output/${p.file}`);
+                const json = await res.json();
+                loadedData[p.id] = { 
+                    name: p.name, 
+                    scores: getScores(json), 
+                    color: colors(projectFiles.indexOf(p)) 
+                };
+            } catch (e) { 
+                console.error("Error loading file:", p.file); 
+            }
+        }
+        // デフォルト全選択
+        projectFiles.forEach(p => { if(document.getElementById(p.id)) document.getElementById(p.id).checked = true; });
+        updateChart();
+    }
+
+    function updateChart() {
+        d3.select("#chart").selectAll("*").remove();
+        const activeIds = projectFiles.filter(p => document.getElementById(p.id).checked).map(p => p.id);
+        
+        const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height)
+                      .append("g").attr("transform", `translate(${width/2},${height/2})`);
+
+        // 同心円ガイド
+        [1, 2, 3, 4, 5].forEach(l => {
+            const r = (radius / 5) * l;
+            svg.append("circle").attr("r", r).attr("fill", "none").attr("stroke", "#eee");
+            svg.append("text").attr("y", -r - 5).attr("x", 5).text(l).style("font-size", "10px").attr("fill", "#ccc");
+        });
+
+        // スポーク（軸）
+        axes.forEach((axis, i) => {
+            const x = radius * Math.cos(angleSlice * i - Math.PI/2);
+            const y = radius * Math.sin(angleSlice * i - Math.PI/2);
+            svg.append("line").attr("x1", 0).attr("y1", 0).attr("x2", x).attr("y2", y).attr("stroke", "#ddd");
+            svg.append("text").attr("x", x * 1.22).attr("y", y * 1.15).attr("text-anchor", "middle").attr("class", "axis-label").text(axis);
+        });
+
+        const radarLine = d3.lineRadial()
+            .radius(d => (d.value / 5) * radius)
+            .angle((d, i) => i * angleSlice)
+            .curve(d3.curveLinearClosed);
+
+        // プロジェクトごとのポリゴン
+        activeIds.forEach(id => {
+            const p = loadedData[id];
+            if (!p) return;
+            svg.append("path")
+                .datum(p.scores)
+                .attr("d", radarLine)
+                .attr("class", "radar-area")
+                .attr("fill", p.color)
+                .attr("stroke", p.color);
+
+            p.scores.forEach((s, j) => {
+                svg.append("circle")
+                   .attr("r", 4)
+                   .attr("fill", p.color)
+                   .attr("cx", (s.value/5) * radius * Math.cos(angleSlice * j - Math.PI/2))
+                   .attr("cy", (s.value/5) * radius * Math.sin(angleSlice * j - Math.PI/2));
+            });
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>

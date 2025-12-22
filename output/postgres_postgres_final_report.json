@@ -1,0 +1,51 @@
+{
+    "project": "postgres/postgres",
+    "generated_at": "2025-12-22T22:09:39.832965",
+    "start_year_requested": 2022,
+    "metrics": {
+        "2022": {
+            "total_commits": 2485,
+            "contrib_total": 26,
+            "contrib_active_n10": 22,
+            "bus_factor_caf": 4,
+            "org_count": 14,
+            "elephant_factor": 3,
+            "issues_new": 36,
+            "issues_closed": 36,
+            "avg_days_to_close": 3.08
+        },
+        "2023": {
+            "total_commits": 2210,
+            "contrib_total": 27,
+            "contrib_active_n10": 24,
+            "bus_factor_caf": 5,
+            "org_count": 12,
+            "elephant_factor": 3,
+            "issues_new": 40,
+            "issues_closed": 39,
+            "avg_days_to_close": 0.0
+        },
+        "2024": {
+            "total_commits": 2722,
+            "contrib_total": 30,
+            "contrib_active_n10": 26,
+            "bus_factor_caf": 6,
+            "org_count": 13,
+            "elephant_factor": 2,
+            "issues_new": 44,
+            "issues_closed": 44,
+            "avg_days_to_close": 0.0
+        },
+        "2025": {
+            "total_commits": 2763,
+            "contrib_total": 31,
+            "contrib_active_n10": 29,
+            "bus_factor_caf": 6,
+            "org_count": 14,
+            "elephant_factor": 2,
+            "issues_new": 63,
+            "issues_closed": 64,
+            "avg_days_to_close": 11.56
+        }
+    }
+}

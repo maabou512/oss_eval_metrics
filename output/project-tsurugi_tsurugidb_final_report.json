@@ -1,0 +1,40 @@
+{
+    "project": "project-tsurugi/tsurugidb",
+    "generated_at": "2025-12-23T06:24:16.897894",
+    "start_year_requested": 2022,
+    "metrics": {
+        "2023": {
+            "total_commits": 275,
+            "contrib_total": 10,
+            "contrib_active_n10": 8,
+            "bus_factor_caf": 2,
+            "org_count": 1,
+            "elephant_factor": 1,
+            "issues_new": 13,
+            "issues_closed": 13,
+            "avg_days_to_close": 5.54
+        },
+        "2024": {
+            "total_commits": 770,
+            "contrib_total": 12,
+            "contrib_active_n10": 10,
+            "bus_factor_caf": 2,
+            "org_count": 3,
+            "elephant_factor": 1,
+            "issues_new": 73,
+            "issues_closed": 73,
+            "avg_days_to_close": 4.11
+        },
+        "2025": {
+            "total_commits": 649,
+            "contrib_total": 9,
+            "contrib_active_n10": 9,
+            "bus_factor_caf": 2,
+            "org_count": 1,
+            "elephant_factor": 1,
+            "issues_new": 47,
+            "issues_closed": 45,
+            "avg_days_to_close": 6.49
+        }
+    }
+}
