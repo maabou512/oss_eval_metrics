@@ -1,75 +1,76 @@
-
 # OSS Health Radar 🚀
 
-GitHubリポジトリの活動データから、OSSプロジェクトの「健康状態」と「コミュニティ特性」を多角的に分析・可視化するツールキットです。
+複数のオープンソースプロジェクトの健全性を、**CHAOSS (Community Health Analytics in Open Source Software)** フレームワークに基づき、インタラクティブなレーダーチャートで比較・可視化するツールです。
 
-## 📋 概要
+## 🌟 特徴
 
-このプロジェクトは、単なるコミット数だけでなく、CHAOSS（Community Health Analytics Open Source Software）の概念を参考に、以下の5つの軸でプロジェクトの個性を可視化します。
+* **全自動同期**: `output` フォルダ内の解析結果を自動スキャンし、ダッシュボードを即座に最新化。
+* **マルチプロジェクト比較**: Linux Kernelのような巨大プロジェクトから新進気鋭のDBまで、同一条件で重ね合わせ。
+* **タイムライン制御**: 2022年〜2025年までのプロジェクトの成長と変化をスライダーで直感的に確認。
+* **CHAOSS準拠**: 国際的なコミュニティ健全性指標に基づいた5軸の科学的評価を採用。
 
-1. **Activity（活動量）**: 開発スピードと更新頻度
-2. **Diversity（多様性）**: 特定企業への依存度
-3. **Density（密度）**: 継続的な常連貢献者の割合
-4. **Responsiveness（反応速度）**: Issue/PRへの対応スピード
-5. **Robustness（堅牢性）**: 知識の分散度（Bus Factor / CAF）
+## 📊 指標とLv.5（最大値）の基準
 
-## 🛠 構成
+各軸は、以下の基準を満たしたときに最大評価（Lv.5）となるよう設計されています。
 
-### 1. データ抽出部 (`chaoss_metrics_collector.py`)
-Pythonを使用してローカルGitログとGitHub APIからデータを抽出します。
-- **入力**: ローカルリポジトリパス、開始年、GitHubアクセストークン
-- **出力**: `output/` フォルダ内に年次メトリクスのJSONファイルを生成
+| 指標 (Radar Axis) | 対応する CHAOSS メトリクス | Lv.5 の目安と意味 |
+| --- | --- | --- |
+| **Activity** | Code Changes / Commits | **年間 5,000 commits〜**：開発スピードが極めて活発な状態。 |
+| **Diversity** | Organizational Diversity | **所属 15組織以上**：特定企業に依存しない強固なエコシステム。 |
+| **Density** | Active Contributors | **Active率 70%〜**：貢献者の多くが常連（年間10回〜）。コミュニティの熱量。 |
+| **Responsiveness** | Time to Close | **平均 5日以内**：PR/Issueへの反応が速く、外部貢献を歓迎する体制。 |
+| **Robustness** | Elephant Factor / Bus Factor | **CAF 10人以上**：主要開発者が分散しており、属人化リスクが低い。 |
 
-### 2. 可視化ダッシュボード (`index.html`)
-D3.jsを使用したブラウザベースのレーダーチャート比較ツールです。
-- 複数プロジェクトの重ね合わせ比較
-- 統計データの正規化表示
-- 特性プロファイルの解説表示
+---
 
-## 🚀 使い方
+## 🛠 ワークフロー
 
-### ステップ 1: セットアップ
+データの「解析」と「表示の同期」を分離しているため、運用が非常にスムーズです。
+
+### 1. データ解析 (Analysis)
+
+まず、解析スクリプトを実行して、最新のメトリクスデータを生成します。
+
 ```bash
-pip install PyGithub
-export GIT_TOKEN_CLASSIC="あなたのGitHubトークン"
+python analyzer.py
 
 ```
 
-### ステップ 2: データの収集
+※ 解析結果は `./output/` フォルダに JSON レポートとして保存されます。
 
-解析したいリポジトリをローカルにクローンし、スクリプトを実行します。
+### 2. ダッシュボードの同期 (Sync)
+
+メンテナンススクリプトを実行し、`output` 内の全データを `index.html` に反映させます。
 
 ```bash
-python chaoss_metrics_collector.py /path/to/your-repo 2022
+python sync_dashboard.py
 
 ```
 
-### ステップ 3: 可視化
+※ これにより `index.html` 内のプロジェクトリストが自動的に書き換えられます。
 
-1. `index.html` 内の `projectFiles` 配列に出力されたJSONファイル名を追加します。
-2. ローカルサーバーを起動します。
+### 3. ローカルサーバーの起動 (View)
+
+D3.js によるデータ読み込みを正しく動作させるため、Python の標準サーバーを使用して閲覧します。
+
 ```bash
+# プロジェクトルートで実行
 python -m http.server 8000
 
 ```
 
+起動後、ブラウザで **`http://localhost:8000/`** にアクセスしてください。
 
-3. ブラウザで `http://localhost:8000` を開き、プロジェクトを選択して比較します。
+---
 
-## 📊 指標の正規化基準
+## 📂 フォルダ構成
 
-本ツールでは「通信簿」のような絶対評価ではなく、各項目の「強度」を可視化するために以下の基準（レベル5の目安）を設けています。
+* `analyzer.py`: OSSの履歴を解析し、JSONを出力するメインスクリプト。
+* `sync_dashboard.py`: `output` フォルダをスキャンして `index.html` のプロジェクトリストを自動更新するツール。
+* `index.html`: D3.js を使用した可視化ダッシュボード。
+* `output/`: 各プロジェクトの解析済み JSON レポートが格納される場所。
 
-| 指標 | レベル5の目安 | 解説 |
-| --- | --- | --- |
-| **Activity** | 5,000 commits/yr | 開発の回転速度。活発な機能追加の状態。 |
-| **Diversity** | 15+ Orgs | 複数の組織が支える自立したエコシステム。 |
-| **Density** | 70%+ Active Rate | 常連貢献者が主体となっているコミュニティ。 |
-| **Responsiveness** | < 5 days to close | フィードバックループが速く、貢献しやすい。 |
-| **Robustness** | 10+ Bus Factor | 知見が分散され、主要メンバー離脱耐性が高い。 |
+## 🌐 関連リンク
 
-## ⚖️ ライセンス
+* [CHAOSS Community Official Site](https://chaoss.community/) - OSSコミュニティの健全性指標に関する国際標準プロジェクト。
 
-CC0 1.0 Universal
-
-```
