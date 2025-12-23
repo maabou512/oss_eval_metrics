@@ -2,24 +2,25 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>OSS Health Radar - CHAOSS Compliant</title>
+    <title>OSS Health Radar - Final Edition</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
         :root { --primary: #007bff; --bg: #f4f7f9; --card: #ffffff; --text: #334155; --chaoss: #002d4b; }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
         .dashboard { display: grid; grid-template-columns: 320px 1fr; gap: 24px; max-width: 1600px; margin: 0 auto; }
         .card { background: var(--card); padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
         
-        /* タイムライン */
+        /* タイムライン操作エリア */
         .timeline-ctrl { margin: 16px 0 24px; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: center; }
         #year-slider { width: 100%; margin-top: 12px; cursor: pointer; }
         #current-year-display { font-size: 36px; font-weight: 800; color: var(--primary); }
 
-        /* プロジェクト選択 */
-        .project-selector { margin-bottom: 10px; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; display: flex; align-items: center; cursor: pointer; font-weight: 600; border-left: 6px solid #ccc; }
-        .project-selector input { margin-right: 12px; width: 18px; height: 18px; }
+        /* プロジェクト選択リスト */
+        .project-selector { margin-bottom: 10px; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; display: flex; align-items: center; cursor: pointer; font-weight: 600; border-left: 6px solid #ccc; transition: 0.2s; }
+        .project-selector:hover { background: #f8fafc; border-color: var(--primary); }
+        .project-selector input { margin-right: 12px; width: 18px; height: 18px; cursor: pointer; }
 
-        /* チャート */
+        /* チャート表示エリア */
         #chart-container { display: flex; flex-direction: column; align-items: center; }
         .tooltip {
             position: fixed; padding: 12px 16px; background: rgba(15, 23, 42, 0.95); color: #fff;
@@ -27,21 +28,20 @@
             box-shadow: 0 10px 15px rgba(0,0,0,0.2); line-height: 1.6;
         }
 
-        /* 🛠 指標の定義 (CHAOSS準拠) */
+        /* 指標定義テーブル */
         #explanation { width: 100%; margin-top: 32px; padding-top: 24px; border-top: 2px solid #f1f5f9; }
         .info-table { width: 100%; border-collapse: collapse; margin-top: 16px; background: #f8fafc; border-radius: 12px; overflow: hidden; }
         .info-table th, .info-table td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
-        .info-table th { background: #f1f5f9; font-weight: 800; color: var(--chaoss); width: 220px; font-size: 14px; }
+        .info-table th { background: #f1f5f9; font-weight: 800; color: var(--chaoss); width: 240px; font-size: 14px; vertical-align: top; }
         .metric-ref { font-size: 11px; color: #64748b; display: block; margin-top: 4px; font-weight: normal; }
         .info-table b { color: var(--primary); }
 
-        /* フッターリンク */
         .footer-links { margin-top: 40px; text-align: center; padding: 20px; color: #94a3b8; font-size: 14px; }
         .footer-links a { color: var(--primary); text-decoration: none; font-weight: 600; }
         .footer-links a:hover { text-decoration: underline; }
 
         .axis-label { font-size: 14px; font-weight: 800; fill: #475569; }
-        .radar-area { fill-opacity: 0.15; stroke-width: 4; }
+        .radar-area { fill-opacity: 0.15; stroke-width: 4; transition: 0.3s; }
     </style>
 </head>
 <body>
@@ -58,32 +58,33 @@
     </div>
 
     <div id="chart-container" class="card">
-        <h2 style="margin: 0 0 10px 0; font-size: 26px;">OSS Health Radar Comparison</h2>
-        <p style="margin: 0 0 20px 0; color: #64748b; font-size: 14px;">Powered by CHAOSS Metrics Framework</p>
+        <h2 style="margin: 0 0 5px 0; font-size: 26px;">OSS Health Radar Comparison</h2>
+        <p style="margin: 0 0 25px 0; color: #64748b; font-size: 14px;">Powered by CHAOSS Metrics Framework</p>
+        
         <div id="chart"></div>
         
         <div id="explanation">
-            <h4 style="margin:0; color: var(--chaoss);">📊 指標の定義とCHAOSSメトリクス対応</h4>
+            <h4 style="margin:0; color: var(--chaoss);">📊 指標の定義とLv.5（最大値）の基準</h4>
             <table class="info-table">
                 <tr>
                     <th>Activity<span class="metric-ref">CHAOSS: Code Changes / Commits</span></th>
-                    <td><b>5,000 commits〜</b>：開発の回転速度。リポジトリへの貢献頻度を示します。</td>
+                    <td><b>年間 5,000 commits〜</b>：開発スピードが非常に速く、機能追加や改善が極めて活発な状態。</td>
                 </tr>
                 <tr>
                     <th>Diversity<span class="metric-ref">CHAOSS: Organizational Diversity</span></th>
-                    <td><b>15+ Orgs / Elephant 2+</b>：貢献者の所属組織数。特定企業への依存リスクを評価します。</td>
+                    <td><b>所属 15組織以上</b>：特定の1社に依存せず、多様な企業・団体が開発を支える強固なエコシステム。</td>
                 </tr>
                 <tr>
                     <th>Density<span class="metric-ref">CHAOSS: Active Contributors</span></th>
-                    <td><b>Active率 70%〜</b>：年間10回以上貢献するコアメンバーの比率。層の厚さを示します。</td>
+                    <td><b>Active率 70%〜</b>：貢献者の多くが「常連（年間10回以上）」であり、コミュニティの熱量が高い。</td>
                 </tr>
                 <tr>
                     <th>Responsiveness<span class="metric-ref">CHAOSS: Time to Close</span></th>
-                    <td><b>平均 5日以内</b>：IssueやPRが処理される速度。プロジェクトの維持管理能力の指標。</td>
+                    <td><b>平均 5日以内</b>：IssueやPRへの反応が速く、外部からの貢献を受け入れやすいオープンな体制。</td>
                 </tr>
                 <tr>
                     <th>Robustness<span class="metric-ref">CHAOSS: Elephant Factor / Bus Factor</span></th>
-                    <td><b>CAF 10+</b>：主要なコードベースを維持する人数。属人化による継続性リスクを評価。</td>
+                    <td><b>CAF 10人以上</b>：主要開発者が多く、特定のメンバーが離脱しても継続可能な堅牢性。</td>
                 </tr>
             </table>
         </div>
@@ -98,18 +99,35 @@
 <div id="tooltip" class="tooltip"></div>
 
 <script>
+    // --- 【自動更新エリア】sync_dashboard.py 実行時にここにリストが入ります ---
     const projectFiles = [
-        { id: "linux", name: "Linux Kernel", file: "torvalds_linux_final_report.json" },
-        { id: "clickhouse", name: "ClickHouse", file: "ClickHouse_ClickHouse_final_report.json" },
-        { id: "postgres", name: "PostgreSQL", file: "postgres_postgres_final_report.json" },
-        { id: "tsurugi", name: "TsurugiDB", file: "project-tsurugi_tsurugidb_final_report.json" }
-    ];
+        {
+                "id": "ClickHouse_ClickHouse",
+                "name": "Clickhouse",
+                "file": "output/ClickHouse_ClickHouse_final_report.json"
+        },
+        {
+                "id": "postgres_postgres",
+                "name": "Postgres",
+                "file": "output/postgres_postgres_final_report.json"
+        },
+        {
+                "id": "project-tsurugi_tsurugidb",
+                "name": "Project-tsurugi",
+                "file": "output/project-tsurugi_tsurugidb_final_report.json"
+        },
+        {
+                "id": "torvalds_linux",
+                "name": "Torvalds",
+                "file": "output/torvalds_linux_final_report.json"
+        }
+]; 
 
     const width = 750, height = 600, margin = 110;
     const radius = Math.min(width, height) / 2 - margin;
     const axes = ["Activity", "Diversity", "Density", "Responsiveness", "Robustness"];
     const angleSlice = (Math.PI * 2) / axes.length;
-    const colors = d3.scaleOrdinal().range(["#ef4444", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6"]);
+    const colors = d3.scaleOrdinal().range(["#ef4444", "#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#6366f1", "#ec4899"]);
 
     let loadedRawData = {};
     const tooltip = d3.select("#tooltip");
@@ -128,19 +146,28 @@
     }
 
     async function init() {
+        if (projectFiles.length === 0) {
+            document.getElementById("chart").innerHTML = "<div style='padding:100px; text-align:center;'><h3>📊 Ready to Sync</h3><p>python sync_dashboard.py を実行してデータを反映させてください。</p></div>";
+            return;
+        }
+
         let allYears = new Set();
         for (const p of projectFiles) {
             try {
-                const res = await fetch(`./output/${p.file}`);
+                const res = await fetch(p.file); 
                 const json = await res.json();
                 loadedRawData[p.id] = json;
                 Object.keys(json.metrics).forEach(y => { if(parseInt(y) <= 2025) allYears.add(y); });
-            } catch (e) { console.error("Skip:", p.file); }
+            } catch (e) { console.error("Load Error:", p.file, e); }
         }
 
         const yearList = Array.from(allYears).sort();
+        if (yearList.length === 0) return;
+
         const slider = document.getElementById("year-slider");
-        slider.min = yearList[0]; slider.max = yearList[yearList.length - 1]; slider.value = slider.max;
+        slider.min = yearList[0];
+        slider.max = yearList[yearList.length - 1];
+        slider.value = slider.max;
         document.getElementById("current-year-display").innerText = slider.value;
 
         slider.oninput = function() {
@@ -166,12 +193,14 @@
         const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height)
                       .append("g").attr("transform", `translate(${width/2},${height/2})`);
 
+        // 背景の同心円
         [1, 2, 3, 4, 5].forEach(l => {
             const r = (radius / 5) * l;
             svg.append("circle").attr("r", r).attr("fill", "none").attr("stroke", "#e2e8f0").attr("stroke-width", 1.5);
             svg.append("text").attr("y", -r - 5).attr("x", 5).text(l).style("font-size", "10px").attr("fill", "#cbd5e1");
         });
 
+        // 軸の描画
         axes.forEach((axis, i) => {
             const x = radius * Math.cos(angleSlice * i - Math.PI/2);
             const y = radius * Math.sin(angleSlice * i - Math.PI/2);
@@ -187,8 +216,11 @@
             if (!scores) return;
 
             const color = colors(projectFiles.findIndex(p => p.id === id));
+            
+            // 領域の描画
             svg.append("path").datum(scores).attr("d", radarLine).attr("class", "radar-area").attr("fill", color).attr("stroke", color);
 
+            // ポイントの描画
             scores.forEach((s, j) => {
                 const cx = (s.value/5) * radius * Math.cos(angleSlice * j - Math.PI/2);
                 const cy = (s.value/5) * radius * Math.sin(angleSlice * j - Math.PI/2);
