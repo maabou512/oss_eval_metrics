@@ -2,178 +2,183 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>OSS Health Radar Dashboard</title>
+    <title>OSS Health Radar - Large Display</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f7f9; margin: 0; padding: 20px; color: #333; }
-        .dashboard { display: grid; grid-template-columns: 320px 1fr; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        :root { --primary: #007bff; --bg: #f4f7f9; --card: #ffffff; --text: #334155; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        .dashboard { display: grid; grid-template-columns: 320px 1fr; gap: 24px; max-width: 1600px; margin: 0 auto; }
+        .card { background: var(--card); padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
         
-        #sidebar { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: fit-content; }
-        #chart-container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        
-        .project-selector { margin-bottom: 12px; padding: 12px; border-radius: 8px; border: 1px solid #eee; transition: 0.2s; display: flex; align-items: center; }
-        .project-selector:hover { background: #f9f9f9; }
-        .project-selector input { margin-right: 12px; transform: scale(1.2); cursor: pointer; }
-        .project-selector label { cursor: pointer; font-weight: bold; flex-grow: 1; }
-        
-        #explanation { margin-top: 40px; padding: 25px; background: #fafafa; border-radius: 12px; border-top: 4px solid #007bff; }
-        #explanation h4 { margin-top: 0; color: #007bff; font-size: 18px; }
-        #explanation p { font-size: 14px; color: #666; margin-bottom: 20px; }
-        #explanation table { width: 100%; border-collapse: collapse; font-size: 14px; background: white; border-radius: 8px; overflow: hidden; }
-        #explanation th, #explanation td { text-align: left; padding: 12px 15px; border-bottom: 1px solid #eee; }
-        #explanation th { background: #f0f4f8; color: #444; }
+        /* スライダー */
+        .timeline-ctrl { margin: 16px 0 24px; padding: 20px; background: #f8fafc; border-radius: 12px; text-align: center; }
+        #year-slider { width: 100%; margin-top: 12px; cursor: pointer; }
+        #current-year-display { font-size: 36px; font-weight: 800; color: var(--primary); }
 
-        .axis-label { font-size: 14px; font-weight: bold; fill: #555; }
-        .radar-area { fill-opacity: 0.2; stroke-width: 3; }
+        .project-selector { margin-bottom: 10px; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; display: flex; align-items: center; cursor: pointer; font-weight: 600; }
+        .project-selector input { margin-right: 12px; width: 18px; height: 18px; }
+
+        /* チャートエリア（大きく確保） */
+        #chart-container { display: flex; flex-direction: column; align-items: center; overflow: visible; }
+        #chart { width: 100%; display: flex; justify-content: center; overflow: visible; }
+
+        .tooltip {
+            position: fixed; padding: 12px 16px; background: rgba(15, 23, 42, 0.95); color: #fff;
+            border-radius: 8px; font-size: 13px; pointer-events: none; opacity: 0; z-index: 9999;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2); line-height: 1.6;
+        }
+
+        /* 指標リストのレイアウト修正（はみ出し防止） */
+        #explanation { width: 100%; margin-top: 32px; border-top: 2px solid #f1f5f9; padding-top: 20px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+        .info-item { padding: 12px; background: #f8fafc; border-radius: 8px; border-left: 4px solid var(--primary); }
+        .info-label { font-weight: 800; font-size: 14px; margin-bottom: 4px; }
+        .info-desc { font-size: 12px; color: #64748b; }
+
+        .axis-label { font-size: 16px; font-weight: 800; fill: #475569; }
+        .radar-area { fill-opacity: 0.15; stroke-width: 4; transition: 0.3s; }
     </style>
 </head>
 <body>
 
-<h2 style="text-align: center; margin-bottom: 30px;">🚀 OSS Health Radar Comparison</h2>
-
 <div class="dashboard">
-    <div id="sidebar">
-        <h3 style="margin-top:0">Select Projects</h3>
+    <div id="sidebar" class="card">
+        <h3 style="margin-top:0">📅 Timeline</h3>
+        <div class="timeline-ctrl">
+            <span id="current-year-display">----</span>
+            <input type="range" id="year-slider" step="1">
+        </div>
+        <h3 style="margin-bottom:16px">🚀 Projects</h3>
         <div id="selectors"></div>
-        <p style="font-size: 12px; color: #999; margin-top: 25px; line-height: 1.4;">
-            左側のチェックボックスで比較対象を切り替えられます。データは <code>output/</code> 内の各プロジェクト最新年度を参照しています。
-        </p>
     </div>
 
-    <div id="chart-container">
-        <div id="chart" style="display: flex; justify-content: center;"></div>
+    <div id="chart-container" class="card">
+        <h2 style="margin-bottom: 30px;">OSS Health Radar Comparison</h2>
+        <div id="chart"></div>
         
         <div id="explanation">
-            <h4>📊 指標の定義と特性プロファイル</h4>
-            <p>このチャートはプロジェクトの優劣を「採点」するものではなく、各コミュニティの構造的特徴やリソースの集中度を可視化したものです。外側に広がるほど、その項目における特性が強いことを示します。</p>
-            <table>
-                <thead>
-                    <tr><th>指標</th><th>レベル5 (外限) の目安</th><th>特性の解説</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><b>Activity</b></td><td>年間 5,000 コミット〜</td><td>開発の回転速度。非常に活発な機能追加・改善が行われている状態。</td></tr>
-                    <tr><td><b>Diversity</b></td><td>関与組織 15以上 (Elephant 2以上)</td><td>組織の多様性。複数の企業や団体が支え合い、自立したエコシステムを形成。</td></tr>
-                    <tr><td><b>Density</b></td><td>Active貢献者率 70%〜</td><td>コミュニティの密度。一見さんではなく、継続的な常連が主体となって開発。</td></tr>
-                    <tr><td><b>Responsiveness</b></td><td>平均クローズ 5日以内</td><td>フィードバックの速さ。IssueやPRが素早く処理され、貢献の障壁が低い。</td></tr>
-                    <tr><td><b>Robustness</b></td><td>Bus Factor (CAF) 10以上</td><td>層の厚さ。特定の少人数に依存せず、知見がチーム内に分散されている。</td></tr>
-                </tbody>
-            </table>
+            <h4 style="margin-bottom:16px;">📌 指標の定義</h4>
+            <div class="info-grid">
+                <div class="info-item"><div class="info-label">Activity</div><div class="info-desc">開発の回転速度。年間5,000コミット以上で最大強度。</div></div>
+                <div class="info-item"><div class="info-label">Diversity</div><div class="info-desc">組織多様性。15組織以上で最大。特定企業への依存度。</div></div>
+                <div class="info-item"><div class="info-label">Density</div><div class="info-desc">コミュニティ密度。常連貢献者が70%超で最大。層の厚さ。</div></div>
+                <div class="info-item"><div class="info-label">Responsiveness</div><div class="info-desc">平均クローズ日数。5日以内なら最大。対応の速さ。</div></div>
+                <div class="info-item"><div class="info-label">Robustness</div><div class="info-desc">Bus Factor (CAF)。10名以上で最大。属人化リスク。</div></div>
+            </div>
         </div>
     </div>
 </div>
 
+<div id="tooltip" class="tooltip"></div>
+
 <script>
-    // --- 対象ファイルの設定 ---
     const projectFiles = [
         { id: "clickhouse", name: "ClickHouse", file: "ClickHouse_ClickHouse_final_report.json" },
         { id: "postgres", name: "PostgreSQL", file: "postgres_postgres_final_report.json" },
         { id: "tsurugi", name: "TsurugiDB", file: "project-tsurugi_tsurugidb_final_report.json" }
     ];
 
-    const width = 600, height = 500, margin = 75;
+    // --- サイズを大幅にアップ ---
+    const width = 800, height = 650;
+    const margin = 100; // ラベルのために余白を広めに確保
     const radius = Math.min(width, height) / 2 - margin;
     const axes = ["Activity", "Diversity", "Density", "Responsiveness", "Robustness"];
     const angleSlice = (Math.PI * 2) / axes.length;
-    const colors = d3.scaleOrdinal(d3.schemeCategory10);
+    const colors = d3.scaleOrdinal().range(["#3b82f6", "#f59e0b", "#10b981", "#8b5cf6", "#ef4444"]);
 
-    let loadedData = {};
+    let loadedRawData = {};
+    const tooltip = d3.select("#tooltip");
 
-    // --- 各指標の正規化ロジック ---
-    function getScores(data) {
-        const years = Object.keys(data.metrics).sort();
-        const d = data.metrics[years[years.length - 1]]; // 最新年
-        
+    function getScoresByYear(data, year) {
+        const d = data.metrics[year];
+        if (!d) return null;
         return [
-            {axis: "Activity",       value: Math.min(5, d.total_commits / 1000)}, // 5000でLv5
-            {axis: "Diversity",      value: Math.min(5, (d.org_count / 15) + (d.elephant_factor > 1 ? 2 : 0))},
-            {axis: "Density",        value: Math.min(5, (d.contrib_active_n10 / d.contrib_total) * 7.1)}, // 70%でLv5
-            {axis: "Responsiveness", value: Math.max(0.5, Math.min(5, 5 - (d.avg_days_to_close / 14)))}, // 2週間程度なら中間
-            {axis: "Robustness",     value: Math.min(5, d.bus_factor_caf / 2)} // CAF 10でLv5
+            { axis: "Activity",       value: Math.min(5, d.total_commits / 1000), raw: `${d.total_commits} commits` },
+            { axis: "Diversity",      value: Math.min(5, (d.org_count / 15) + (d.elephant_factor > 1 ? 2 : 0)), raw: `${d.org_count} Orgs` },
+            { axis: "Density",        value: Math.min(5, (d.contrib_active_n10 / (d.contrib_total || 1)) * 7.1), raw: `${Math.round((d.contrib_active_n10/d.contrib_total)*100)}% Active` },
+            { axis: "Responsiveness", value: Math.max(0.5, Math.min(5, 5 - (d.avg_days_to_close / 14))), raw: `${d.avg_days_to_close.toFixed(1)} days` },
+            { axis: "Robustness",     value: Math.min(5, d.bus_factor_caf / 2), raw: `Bus Factor: ${d.bus_factor_caf}` }
         ];
     }
 
-    // セレクターの構築
-    const selectors = d3.select("#selectors");
-    projectFiles.forEach((p, i) => {
-        const div = selectors.append("div").attr("class", "project-selector");
-        div.append("input")
-            .attr("type", "checkbox")
-            .attr("id", p.id)
-            .on("change", () => updateChart());
-        div.append("label")
-            .attr("for", p.id)
-            .style("color", colors(i))
-            .text(p.name);
-    });
-
-    // 初期化とデータロード
     async function init() {
+        let allYears = new Set();
         for (const p of projectFiles) {
             try {
                 const res = await fetch(`./output/${p.file}`);
                 const json = await res.json();
-                loadedData[p.id] = { 
-                    name: p.name, 
-                    scores: getScores(json), 
-                    color: colors(projectFiles.indexOf(p)) 
-                };
-            } catch (e) { 
-                console.error("Error loading file:", p.file); 
-            }
+                loadedRawData[p.id] = json;
+                Object.keys(json.metrics).forEach(y => allYears.add(y));
+            } catch (e) { console.error("Error:", p.file); }
         }
-        // デフォルト全選択
-        projectFiles.forEach(p => { if(document.getElementById(p.id)) document.getElementById(p.id).checked = true; });
+
+        const yearList = Array.from(allYears).sort();
+        const slider = document.getElementById("year-slider");
+        slider.min = yearList[0]; slider.max = yearList[yearList.length - 1]; slider.value = slider.max;
+        document.getElementById("current-year-display").innerText = slider.value;
+
+        slider.oninput = function() { document.getElementById("current-year-display").innerText = this.value; updateChart(); };
+
+        const selectors = d3.select("#selectors");
+        projectFiles.forEach((p, i) => {
+            const div = selectors.append("div").attr("class", "project-selector").style("border-left", `6px solid ${colors(i)}`);
+            div.append("input").attr("type", "checkbox").attr("id", p.id).attr("checked", true).on("change", updateChart);
+            div.append("label").attr("for", p.id).text(p.name);
+        });
+
         updateChart();
     }
 
     function updateChart() {
         d3.select("#chart").selectAll("*").remove();
+        const targetYear = document.getElementById("year-slider").value;
         const activeIds = projectFiles.filter(p => document.getElementById(p.id).checked).map(p => p.id);
         
-        const svg = d3.select("#chart").append("svg").attr("width", width).attr("height", height)
+        const svg = d3.select("#chart").append("svg")
+                      .attr("width", width).attr("height", height)
+                      .attr("viewBox", `0 0 ${width} ${height}`)
                       .append("g").attr("transform", `translate(${width/2},${height/2})`);
 
-        // 同心円ガイド
+        // 背景グリッド（Lv.5まで）
         [1, 2, 3, 4, 5].forEach(l => {
             const r = (radius / 5) * l;
-            svg.append("circle").attr("r", r).attr("fill", "none").attr("stroke", "#eee");
-            svg.append("text").attr("y", -r - 5).attr("x", 5).text(l).style("font-size", "10px").attr("fill", "#ccc");
+            svg.append("circle").attr("r", r).attr("fill", "none").attr("stroke", "#e2e8f0").attr("stroke-width", 1.5);
         });
 
-        // スポーク（軸）
+        // 軸とラベル（マージンを考慮して配置）
         axes.forEach((axis, i) => {
             const x = radius * Math.cos(angleSlice * i - Math.PI/2);
             const y = radius * Math.sin(angleSlice * i - Math.PI/2);
-            svg.append("line").attr("x1", 0).attr("y1", 0).attr("x2", x).attr("y2", y).attr("stroke", "#ddd");
-            svg.append("text").attr("x", x * 1.22).attr("y", y * 1.15).attr("text-anchor", "middle").attr("class", "axis-label").text(axis);
+            svg.append("line").attr("x1", 0).attr("y1", 0).attr("x2", x).attr("y2", y).attr("stroke", "#cbd5e1").attr("stroke-width", 2);
+            
+            // ラベルの位置調整
+            const labelX = (radius + 40) * Math.cos(angleSlice * i - Math.PI/2);
+            const labelY = (radius + 30) * Math.sin(angleSlice * i - Math.PI/2);
+            svg.append("text").attr("x", labelX).attr("y", labelY).attr("text-anchor", "middle").attr("class", "axis-label").text(axis);
         });
 
-        const radarLine = d3.lineRadial()
-            .radius(d => (d.value / 5) * radius)
-            .angle((d, i) => i * angleSlice)
-            .curve(d3.curveLinearClosed);
+        const radarLine = d3.lineRadial().radius(d => (d.value / 5) * radius).angle((d, i) => i * angleSlice).curve(d3.curveLinearClosed);
 
-        // プロジェクトごとのポリゴン
         activeIds.forEach(id => {
-            const p = loadedData[id];
-            if (!p) return;
-            svg.append("path")
-                .datum(p.scores)
-                .attr("d", radarLine)
-                .attr("class", "radar-area")
-                .attr("fill", p.color)
-                .attr("stroke", p.color);
+            const raw = loadedRawData[id];
+            const scores = getScoresByYear(raw, targetYear);
+            if (!scores) return;
 
-            p.scores.forEach((s, j) => {
-                svg.append("circle")
-                   .attr("r", 4)
-                   .attr("fill", p.color)
-                   .attr("cx", (s.value/5) * radius * Math.cos(angleSlice * j - Math.PI/2))
-                   .attr("cy", (s.value/5) * radius * Math.sin(angleSlice * j - Math.PI/2));
+            const color = colors(projectFiles.findIndex(p => p.id === id));
+            svg.append("path").datum(scores).attr("d", radarLine).attr("class", "radar-area").attr("fill", color).attr("stroke", color);
+
+            scores.forEach((s, j) => {
+                const cx = (s.value/5) * radius * Math.cos(angleSlice * j - Math.PI/2);
+                const cy = (s.value/5) * radius * Math.sin(angleSlice * j - Math.PI/2);
+                svg.append("circle").attr("r", 6).attr("cx", cx).attr("cy", cy).attr("fill", color)
+                   .on("mouseover", (e) => {
+                       tooltip.style("opacity", 1).html(`<strong>${raw.project}</strong><br>✨ ${s.axis}: Lv ${s.value.toFixed(1)}<br>📊 ${s.raw}`);
+                   })
+                   .on("mousemove", (e) => tooltip.style("left", (e.clientX + 15) + "px").style("top", (e.clientY - 20) + "px"))
+                   .on("mouseleave", () => tooltip.style("opacity", 0));
             });
         });
     }
-
     init();
 </script>
 </body>
