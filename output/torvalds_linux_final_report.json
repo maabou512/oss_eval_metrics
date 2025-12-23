@@ -1,0 +1,62 @@
+{
+    "project": "torvalds/linux",
+    "generated_at": "2025-12-23T10:02:27.184859",
+    "start_year_requested": 2022,
+    "metrics": {
+        "2022": {
+            "total_commits": 86803,
+            "contrib_total": 4911,
+            "contrib_active_n10": 1361,
+            "bus_factor_caf": 178,
+            "org_count": 1080,
+            "elephant_factor": 11,
+            "issues_new": 0,
+            "issues_closed": 6,
+            "avg_days_to_close": 1029.67
+        },
+        "2023": {
+            "total_commits": 88047,
+            "contrib_total": 4860,
+            "contrib_active_n10": 1370,
+            "bus_factor_caf": 160,
+            "org_count": 987,
+            "elephant_factor": 10,
+            "issues_new": 2,
+            "issues_closed": 6,
+            "avg_days_to_close": 1855.67
+        },
+        "2024": {
+            "total_commits": 84018,
+            "contrib_total": 5120,
+            "contrib_active_n10": 1306,
+            "bus_factor_caf": 177,
+            "org_count": 1066,
+            "elephant_factor": 10,
+            "issues_new": 250,
+            "issues_closed": 129,
+            "avg_days_to_close": 165.23
+        },
+        "2025": {
+            "total_commits": 78910,
+            "contrib_total": 4987,
+            "contrib_active_n10": 1274,
+            "bus_factor_caf": 167,
+            "org_count": 1043,
+            "elephant_factor": 10,
+            "issues_new": 247,
+            "issues_closed": 676,
+            "avg_days_to_close": 1431.89
+        },
+        "2077": {
+            "total_commits": 2,
+            "contrib_total": 1,
+            "contrib_active_n10": 0,
+            "bus_factor_caf": 1,
+            "org_count": 1,
+            "elephant_factor": 1,
+            "issues_new": 0,
+            "issues_closed": 0,
+            "avg_days_to_close": 0
+        }
+    }
+}
