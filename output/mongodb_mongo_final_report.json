@@ -1,0 +1,40 @@
+{
+    "project": "mongodb/mongo",
+    "generated_at": "2025-12-26T18:11:32.106984",
+    "start_year_requested": 2023,
+    "metrics": {
+        "2023": {
+            "total_commits": 8102,
+            "contrib_total": 332,
+            "contrib_active_n10": 188,
+            "bus_factor_caf": 52,
+            "org_count": 10,
+            "elephant_factor": 1,
+            "issues_new": 69,
+            "issues_closed": 57,
+            "avg_days_to_close": 282.54
+        },
+        "2024": {
+            "total_commits": 8325,
+            "contrib_total": 357,
+            "contrib_active_n10": 199,
+            "bus_factor_caf": 55,
+            "org_count": 12,
+            "elephant_factor": 1,
+            "issues_new": 17,
+            "issues_closed": 17,
+            "avg_days_to_close": 304.53
+        },
+        "2025": {
+            "total_commits": 8622,
+            "contrib_total": 305,
+            "contrib_active_n10": 188,
+            "bus_factor_caf": 47,
+            "org_count": 10,
+            "elephant_factor": 1,
+            "issues_new": 21,
+            "issues_closed": 79,
+            "avg_days_to_close": 1343.23
+        }
+    }
+}
