@@ -1,6 +1,7 @@
 # OSS Health Radar 🚀
 
 複数のオープンソースプロジェクトの健全性を、**CHAOSS (Community Health Analytics in Open Source Software)** フレームワークに基づき、インタラクティブなレーダーチャートで比較・可視化するツールです。
+https://oss-eval.netlify.app/
 
 ## 🌟 特徴
 
